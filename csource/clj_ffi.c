@@ -1,53 +1,44 @@
 #include <ffi.h>
+
+#ifdef TEST
+
 #include <dlfcn.h>
 #include <stdio.h>
+
+#endif
+
 #import "clj_ffi.h"
 
-/* typedef int (*compress_t)(unsigned char*, size_t*, const unsigned char*, size_t); */
 
-typedef double (*cos_t)(double x);
 
 ffi_type* argtype_to_ffi_type(int argtype){
     ffi_type* ret;
 
     switch (argtype){
-    case 0: ret = &ffi_type_void; break;
-    case 1: ret = &ffi_type_pointer; break;
-    case 2: ret = &ffi_type_sint8; break;
-    case 3: ret = &ffi_type_sint16; break;
-    case 4: ret = &ffi_type_sint32; break;
-    case 5: ret = &ffi_type_sint64; break;
-    case 6: ret = &ffi_type_float; break;
-    case 7: ret = &ffi_type_double; break;
+    case 1: ret = &ffi_type_complex_double; break;
+    case 2: ret = &ffi_type_complex_float; break;
+    case 3: ret = &ffi_type_double; break;
+    case 4: ret = &ffi_type_float; break;
+    case 5: ret = &ffi_type_pointer; break;
+    case 6: ret = &ffi_type_sint16; break;
+    case 7: ret = &ffi_type_sint32; break;
+    case 8: ret = &ffi_type_sint64; break;
+    case 9: ret = &ffi_type_sint8; break;
+    case 10: ret = &ffi_type_uint16; break;
+    case 11: ret = &ffi_type_uint32; break;
+    case 12: ret = &ffi_type_uint64; break;
+    case 13: ret = &ffi_type_uint8; break;
+    case 14: ret = &ffi_type_void; break;
     default: ret = &ffi_type_void;
+
     }
 
     return ret;
 }
 
-
-void callc(void* fptr, int rettype, void* ret, int nargs, int* argtypes, void** values){
-
-    ffi_type* ffi_argtypes[nargs];
-    for ( int i = 0; i < nargs; i ++){
-        ffi_argtypes[i] = argtype_to_ffi_type(argtypes[i]);
-    }
-
-    
-    ffi_cif cif;
-    ffi_status status = ffi_prep_cif(&cif, FFI_DEFAULT_ABI, nargs, argtype_to_ffi_type(rettype),
-                                     ffi_argtypes);
-
-    
-    
-
-    ffi_call(&cif, FFI_FN(fptr), ret, values);
-
-
-}
-
-
 #ifdef TEST
+/* typedef int (*compress_t)(unsigned char*, size_t*, const unsigned char*, size_t); */
+typedef double (*cos_t)(double x);
 
 int main(){
 
@@ -62,6 +53,8 @@ int main(){
     double result = cos(42.0);
 
     printf("result: %f %lu \n", result, sizeof(result));
+
+    printf("default abi: %d, %lu\n", FFI_DEFAULT_ABI, sizeof(FFI_DEFAULT_ABI));
 
     return 0;
 

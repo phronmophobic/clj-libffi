@@ -32,6 +32,3 @@ cc \
 
 cp libcljffi.dylib ../resources
 
-# cc -lz ztest.c -o ztest
-
-# ./ztest
