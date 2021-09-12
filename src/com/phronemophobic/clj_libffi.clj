@@ -165,7 +165,14 @@
    (make-ptr-uninitialized dtype {:resource-type :auto
                                   :uninitialized? true})))
 
-
+;; usual size is 32
+;; using 64 for extra space in case it grows in the future
+(def ffi_cif_sizeof 64)
+(defn ^:private cif-ptr-init ^NativeBuffer []
+  (-> (native-buffer/malloc
+       ffi_cif_sizeof
+       {:resource-type :auto
+        :uninitialized? true})))
 
 (defn call [fname ret-type & types-and-args]
   (assert (even? (count types-and-args)))
@@ -174,7 +181,7 @@
         fptr (dlsym RTLD_DEFAULT (dt-ffi/string->c fname))
         _ (assert fptr (str "function not found: " fname))
 
-        cif (make-ptr-uninitialized :int64)
+        cif (cif-ptr-init)
 
         arg-types (take-nth 2 types-and-args)
         args (->>  types-and-args
