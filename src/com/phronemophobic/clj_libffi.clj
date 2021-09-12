@@ -43,14 +43,14 @@
                                 ['abi :int32]
                                 ['nargs :int32]
                                 ['rettype :pointer]
-                                ['argtypes :pointer]
+                                ['argtypes :pointer?]
                                 ]}
 
       :ffi_call {:rettype :void
                  :argtypes [['cif :pointer]
                             ['fptr :pointer]
-                            ['rvalue :pointer]
-                            ['args :pointer]]}
+                            ['rvalue :pointer?]
+                            ['args :pointer?]]}
 
       :dlopen {:rettype :pointer
                :argtypes [['path :pointer]
