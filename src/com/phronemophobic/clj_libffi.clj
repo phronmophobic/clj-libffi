@@ -143,6 +143,9 @@
     :float64 @ffi_type_double)
   )
 
+(defn load-library [libname]
+  (dlopen (dt-ffi/string->c libname)
+          RTLD_LAZY))
 
 (comment
   (def zlib (dlopen (dt-ffi/string->c "/opt/local/lib/libz.dylib")

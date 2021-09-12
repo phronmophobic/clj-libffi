@@ -7,13 +7,13 @@
  {:test {:extra-paths ["test"]
          :extra-deps {org.clojure/test.check {:mvn/version "1.1.0"}}}
 
-  :depstar-ffi
+  :uberjar
   {:replace-deps {com.github.seancorfield/depstar {:mvn/version "2.0.216"}}
    :ns-default hf.depstar
    :aliases [:graal-compile]
    :exec-fn hf.depstar/uberjar
-   :exec-args {:group-id "com.phronemophobic.clj-libffi"
-               :artifact-id "membrane"
+   :exec-args {:group-id "com.phronemophobic"
+               :artifact-id "clj-libbffi"
                :version "1.00-beta-1"
                :sync-pom true
                :aot true
@@ -26,7 +26,6 @@
                :jvm-opts ["-Dtech.v3.datatype.graal-native=true"
                           "-Dclojure.compiler.direct-linking=true"
                           "-Dclojure.spec.skip-macros=true"]}}
-
   :runner
   {:extra-deps {io.github.cognitect-labs/test-runner
                 {:git/url "https://github.com/cognitect-labs/test-runner"

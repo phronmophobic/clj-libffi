@@ -1,0 +1,24 @@
+{:paths ["src" "resources"]
+ :deps {org.clojure/clojure {:mvn/version "1.10.3"}
+        com.phronemophobic/clj-libffi {:local/root "../../"}
+        org.clojure/math.combinatorics {:mvn/version "0.1.6"}
+        net.java.dev.jna/jna {:mvn/version "5.8.0"}
+        cnuernber/dtype-next {:mvn/version "8.027"}}
+ :aliases
+ {:jar
+  {:replace-deps {com.github.seancorfield/depstar {:mvn/version "2.0.216"}}
+   :ns-default hf.depstar
+   :aliases [:graal-compile]
+   :exec-fn hf.depstar/uberjar
+   :exec-args {:group-id "com.phronemphobic"
+               :artifact-id "ffitest"
+               :version "1.00-beta-1"
+               :sync-pom true
+               :aot true
+               :compile-ns [ffitest.core]
+               :main-class ffitest.core
+               :jar "target/ffitest.jar"
+               ;;Disable tensor code generation and ensure direct linking.
+               :jvm-opts ["-Dtech.v3.datatype.graal-native=true"
+                          "-Dclojure.compiler.direct-linking=true"
+                          "-Dclojure.spec.skip-macros=true"]}}}}
