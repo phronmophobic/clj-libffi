@@ -12,7 +12,7 @@
 
 (set! *warn-on-reflection* true)
 
-(defn long->pointer [n]
+(defn ^:private long->pointer [n]
   (Pointer. n))
 
 (def RTLD_LAZY (int 0x1))
@@ -92,7 +92,7 @@
 
 
 (declare argtype_to_ffi_type)
-(defn find-ffi-type [sym]
+(defn ^:private find-ffi-type [sym]
   []
   (graal-native/if-defined-graal-native
    ;; values chosen arbitrarily
@@ -116,22 +116,22 @@
    (dt-ffi/find-symbol sym)))
 
 
-(def ffi_type_complex_double (delay (find-ffi-type "ffi_type_complex_double")))
-(def ffi_type_complex_float (delay (find-ffi-type "ffi_type_complex_float")))
-(def ffi_type_double (delay (find-ffi-type "ffi_type_double")))
-(def ffi_type_float (delay (find-ffi-type "ffi_type_float")))
-(def ffi_type_pointer (delay (find-ffi-type "ffi_type_pointer")))
-(def ffi_type_sint16 (delay (find-ffi-type "ffi_type_sint16")))
-(def ffi_type_sint32 (delay (find-ffi-type "ffi_type_sint32")))
-(def ffi_type_sint64 (delay (find-ffi-type "ffi_type_sint64")))
-(def ffi_type_sint8 (delay (find-ffi-type "ffi_type_sint8")))
-(def ffi_type_uint16 (delay (find-ffi-type "ffi_type_uint16")))
-(def ffi_type_uint32 (delay (find-ffi-type "ffi_type_uint32")))
-(def ffi_type_uint64 (delay (find-ffi-type "ffi_type_uint64")))
-(def ffi_type_uint8 (delay (find-ffi-type "ffi_type_uint8")))
-(def ffi_type_void (delay (find-ffi-type "ffi_type_void")))
+(def ^:private ffi_type_complex_double (delay (find-ffi-type "ffi_type_complex_double")))
+(def ^:private ffi_type_complex_float (delay (find-ffi-type "ffi_type_complex_float")))
+(def ^:private ffi_type_double (delay (find-ffi-type "ffi_type_double")))
+(def ^:private ffi_type_float (delay (find-ffi-type "ffi_type_float")))
+(def ^:private ffi_type_pointer (delay (find-ffi-type "ffi_type_pointer")))
+(def ^:private ffi_type_sint16 (delay (find-ffi-type "ffi_type_sint16")))
+(def ^:private ffi_type_sint32 (delay (find-ffi-type "ffi_type_sint32")))
+(def ^:private ffi_type_sint64 (delay (find-ffi-type "ffi_type_sint64")))
+(def ^:private ffi_type_sint8 (delay (find-ffi-type "ffi_type_sint8")))
+(def ^:private ffi_type_uint16 (delay (find-ffi-type "ffi_type_uint16")))
+(def ^:private ffi_type_uint32 (delay (find-ffi-type "ffi_type_uint32")))
+(def ^:private ffi_type_uint64 (delay (find-ffi-type "ffi_type_uint64")))
+(def ^:private ffi_type_uint8 (delay (find-ffi-type "ffi_type_uint8")))
+(def ^:private ffi_type_void (delay (find-ffi-type "ffi_type_void")))
 
-(defn argtype->ffi-type [type]
+(defn ^:private argtype->ffi-type [type]
   (case type
     :void  @ffi_type_void
     (:pointer? :pointer) @ffi_type_pointer
@@ -151,7 +151,7 @@
   (def compress (dlsym RTLD_DEFAULT (dt-ffi/string->c "compress"))))
 
 
-(defn make-ptr-uninitialized
+(defn ^:private make-ptr-uninitialized
   "Make an object convertible to a pointer that points to  single value of type
   `dtype`."
   (^NativeBuffer [dtype options]
