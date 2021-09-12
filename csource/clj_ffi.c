@@ -54,6 +54,8 @@ int main(){
 
     printf("result: %f %lu \n", result, sizeof(result));
 
+    printf("cif_size: %lu\n", sizeof(ffi_cif));
+
     printf("default abi: %d, %lu\n", FFI_DEFAULT_ABI, sizeof(FFI_DEFAULT_ABI));
 
     return 0;
