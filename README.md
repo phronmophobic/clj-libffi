@@ -13,7 +13,7 @@ On the jvm, using clj-libffi is worse than other similar options like jna and jd
 (ffi/call "cos" :float64 :float64 Math/PI)
 ;; -1.0
 
-(ffi/load-library "libmy.dylib>")
+(ffi/load-library "libmy.dylib")
 
 (ffi/call "myfn" :void
           :int64 42
