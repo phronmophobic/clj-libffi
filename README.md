@@ -10,6 +10,8 @@ On the jvm, using clj-libffi is worse than other similar options like jna and jd
 
 ```clojure
 
+(require '[com.phronemophobic.clj-libffi :as ffi])
+
 (ffi/call "cos" :float64 :float64 Math/PI)
 ;; -1.0
 
