@@ -29,6 +29,3 @@ cc \
     -arch x86_64 \
     clj_ffi.c \
     -o ffi_test
-
-cp libcljffi.dylib ../resources
-
