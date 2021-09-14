@@ -25,7 +25,7 @@ On the jvm, using clj-libffi is worse than other similar options like jna and jd
 
 ### Graalvm
 
-To compile for graalvm, you must link against libffi. See `examples/ffitest/scripts/compile-test.sh`.
+To compile for graalvm, you must link against libffi. See [examples/ffitest/scripts/compile-test.sh](examples/ffitest/scripts/compile-test.sh).
 
 ### Limitations
 
