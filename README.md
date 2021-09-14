@@ -25,12 +25,12 @@ On the jvm, using clj-libffi is worse than other similar options like jna and jd
 
 ### Graalvm
 
-To compile for graalvm, you must link against libffi. See `examples/ffitest/scripts/compile-test.sh`.
+To compile for graalvm, you must link against libffi. See [examples/ffitest/scripts/compile-test.sh](examples/ffitest/scripts/compile-test.sh).
 
 ### Limitations
 
-* Currently only runs on Mac OSX.
-* No support for passing structs by value yet.
+* Currently only runs on Mac OSX. If you'd like to see support for other platforms, please comment or upvote the issues for [linux](https://github.com/phronmophobic/clj-libffi/issues/1) and [windows](https://github.com/phronmophobic/clj-libffi/issues/2).
+* No support for passing structs by value yet. See [issue](https://github.com/phronmophobic/clj-libffi/issues/3).
 
 ## License
 
