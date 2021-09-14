@@ -121,7 +121,12 @@
     :float64 @ffi_type_double)
   )
 
-(defn load-library [libname]
+(defn load-library
+  "Loads a shared library.
+
+  <libname> can be either a lib name \"ffi\" or a path to a shared library.
+  "
+  [libname]
   (dlopen (dt-ffi/string->c libname)
           RTLD_LAZY))
 
@@ -155,7 +160,32 @@
        {:resource-type :auto
         :uninitialized? true})))
 
-(defn call [fname ret-type & types-and-args]
+(defn call
+  "Calls a c function with fname. Function must be
+  already linked or loaded using `load-library`.
+
+  fname: String name of the function
+  ret-type: keyword return type of the function. See types below.
+  types-and-args: pairs of <arg-type> <arg-value>. See types below.
+
+  Types:
+
+  Same as dtype-next.
+  :void
+  :pointer
+  :pointer?
+  :int8
+  :int16
+  :int32
+  :int64
+  :float32
+  :float64
+
+  Example:
+
+  (call \"cosf\" :float32 :float32 42)
+"
+  [fname ret-type & types-and-args]
   (assert (even? (count types-and-args)))
   (let [;; this also initializes the ffi library
         ;; so that find symbol works :p
