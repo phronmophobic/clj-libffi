@@ -30,7 +30,7 @@ To compile for graalvm, you must link against libffi. See `examples/ffitest/scri
 ### Limitations
 
 * Currently only runs on Mac OSX. If you'd like to see support for other platforms, please comment or upvote the issues for [linux](https://github.com/phronmophobic/clj-libffi/issues/1) and [windows](https://github.com/phronmophobic/clj-libffi/issues/2).
-* No support for passing structs by value yet.
+* No support for passing structs by value yet. See [issue](https://github.com/phronmophobic/clj-libffi/issues/3)
 
 ## License
 
