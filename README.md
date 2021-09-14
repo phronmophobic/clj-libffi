@@ -25,11 +25,11 @@ On the jvm, using clj-libffi is worse than other similar options like jna and jd
 
 ### Graalvm
 
-To compile for graalvm, you must link against libffi and `csource/clj_ffi.o`. See `examples/ffitest`.
+To compile for graalvm, you must link against libffi. See `examples/ffitest/scripts/compile-test.sh`.
 
 ### Limitations
 
-* Currently only tested on Mac OSX.
+* Currently only runs on Mac OSX.
 * No support for passing structs by value yet.
 
 ## License

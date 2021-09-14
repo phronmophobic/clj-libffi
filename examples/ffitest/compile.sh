@@ -3,7 +3,7 @@
 set -e
 set -x
 
-clojure -M -m genc
+clojure -M -m ffitest.genc
 
 cc \
     -dynamiclib \

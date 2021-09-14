@@ -4,8 +4,7 @@
             [tech.v3.datatype.ffi.size-t :as ffi-size-t]
             [tech.v3.datatype.native-buffer :as native-buffer]
             [tech.v3.datatype.casting :as casting]
-            [tech.v3.datatype.graal-native :as graal-native]
-            [tech.v3.datatype.ffi.graalvm-runtime :as graalvm-runtime])
+            [tech.v3.datatype.graal-native :as graal-native])
   (:import [tech.v3.datatype.native_buffer NativeBuffer]
            [tech.v3.datatype.ffi Pointer])
   (:gen-class))
@@ -59,11 +58,7 @@
       :dlsym {:rettype :pointer
               :argtypes [['handle :pointer]
                          ['symbol :pointer]]}
-      ,}
-     (graal-native/when-defined-graal-native
-      {
-       :argtype_to_ffi_type {:rettype :pointer
-                             :argtypes [['argtype :int32]]}}))
+      ,})
 
     :symbols
     (graal-native/if-defined-graal-native
@@ -95,24 +90,7 @@
 (defn ^:private find-ffi-type [sym]
   []
   (graal-native/if-defined-graal-native
-   ;; values chosen arbitrarily
-   ;; must match csource/clj_ffi.c
-   (argtype_to_ffi_type
-    (case sym
-      "ffi_type_complex_double" 1
-      "ffi_type_complex_float" 2
-      "ffi_type_double" 3
-      "ffi_type_float" 4
-      "ffi_type_pointer" 5
-      "ffi_type_sint16" 6
-      "ffi_type_sint32" 7
-      "ffi_type_sint64" 8
-      "ffi_type_sint8" 9
-      "ffi_type_uint16" 10
-      "ffi_type_uint32" 11
-      "ffi_type_uint64" 12
-      "ffi_type_uint8" 13
-      "ffi_type_void" 14))
+   (dlsym RTLD_DEFAULT (dt-ffi/string->c sym))
    (dt-ffi/find-symbol sym)))
 
 
