@@ -6,6 +6,16 @@ A wrapper for libffi.
 
 On the jvm, using clj-libffi is worse than other similar options like jna and jdk16's ffi. However, when compiling to native using graalvm, only static calls to c libraries are possible (afaik). Using libffi, loading and calling arbitrary functions from arbitrary shared libraries can be achieved.
 
+## Deps
+
+Leiningen/Boot
+
+`[com.phronemophobic/clj-libbffi "1.1"]`
+
+Clojure CLI/deps.edn
+
+`com.phronemophobic/clj-libbffi {:mvn/version "1.1"}`
+
 ## Usage
 
 ```clojure
