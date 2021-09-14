@@ -10,11 +10,11 @@ On the jvm, using clj-libffi is worse than other similar options like jna and jd
 
 Leiningen/Boot
 
-`[com.phronemophobic/clj-libbffi "1.1"]`
+`[com.phronemophobic/clj-lbbffi "1.2"]`
 
 Clojure CLI/deps.edn
 
-`com.phronemophobic/clj-libbffi {:mvn/version "1.1"}`
+`com.phronemophobic/clj-libffi {:mvn/version "1.2"}`
 
 ## Usage
 

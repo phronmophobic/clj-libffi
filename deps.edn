@@ -13,7 +13,7 @@
    :aliases [:graal-compile]
    :exec-fn hf.depstar/uberjar
    :exec-args {:group-id "com.phronemophobic"
-               :artifact-id "clj-libbffi"
+               :artifact-id "clj-libffi"
                :version "1.00-beta-1"
                :sync-pom true
                :aot true

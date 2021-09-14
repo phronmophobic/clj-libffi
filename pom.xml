@@ -2,8 +2,8 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.phronemophobic</groupId>
-  <artifactId>clj-libbffi</artifactId>
-  <version>1.1</version>
+  <artifactId>clj-libffi</artifactId>
+  <version>1.2</version>
   <name>com.phronemophobic/clj-libffi</name>
   <description>FIXME: my new library.</description>
   <url>https://github.com/com.phronemophobic/clj-libffi</url>
@@ -22,7 +22,7 @@
     <url>https://github.com/com.phronemophobic/clj-libffi</url>
     <connection>scm:git:git://github.com/com.phronemophobic/clj-libffi.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/com.phronemophobic/clj-libffi.git</developerConnection>
-    <tag>v1.1</tag>
+    <tag>v1.2</tag>
   </scm>
   <dependencies>
     <dependency>
