@@ -13,6 +13,11 @@
       <version>1.10.3</version>
     </dependency>
     <dependency>
+      <groupId>com.phronemophobic</groupId>
+      <artifactId>clj-libffi</artifactId>
+      <version>1.2</version>
+    </dependency>
+    <dependency>
       <groupId>org.clojure</groupId>
       <artifactId>math.combinatorics</artifactId>
       <version>0.1.6</version>

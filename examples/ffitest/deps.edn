@@ -1,6 +1,9 @@
 {:paths ["src" "resources"]
  :deps {org.clojure/clojure {:mvn/version "1.10.3"}
-        com.phronemophobic/clj-libffi {:local/root "../../"}
+        com.phronemophobic/clj-libffi {:local/root "../../"
+                                       ;;:mvn/version "1.2"
+                                       ,}
+
         org.clojure/math.combinatorics {:mvn/version "0.1.6"}
         net.java.dev.jna/jna {:mvn/version "5.8.0"}
         cnuernber/dtype-next {:mvn/version "8.027"}}
