@@ -1,3 +1,4 @@
 *.o
 ffi_test
 *.dylib
+print_ffi_types

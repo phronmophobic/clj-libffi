@@ -29,3 +29,9 @@ cc \
     -arch x86_64 \
     clj_ffi.c \
     -o ffi_test
+
+cc \
+    `pkg-config --static --libs --cflags libffi` \
+    -arch x86_64 \
+    print_ffi_types.c \
+    -o print_ffi_types

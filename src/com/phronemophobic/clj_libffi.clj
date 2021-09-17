@@ -4,6 +4,7 @@
             [tech.v3.datatype.ffi.size-t :as ffi-size-t]
             [tech.v3.datatype.native-buffer :as native-buffer]
             [tech.v3.datatype.casting :as casting]
+            [tech.v3.datatype.struct :as dt-struct]
             [tech.v3.datatype.graal-native :as graal-native])
   (:import [tech.v3.datatype.native_buffer NativeBuffer]
            [tech.v3.datatype.ffi Pointer])
@@ -86,13 +87,47 @@
                 ["ffi"])))
 
 
-(declare argtype_to_ffi_type)
+(dt-struct/define-datatype! :ffi_type
+  [{:name :size :datatype (ffi-size-t/size-t-type)}
+   {:name :alignment :datatype :int16}
+   {:name :type :datatype :int16}
+   {:name :elements :datatype (ffi-size-t/ptr-t-type)}])
+
+;; see csource/print_ffi_types.c
+(def ^:private ffi-type-infos
+  [["ffi_type_double", 8, 8, 3, 0x0]
+   ["ffi_type_float", 4, 4, 2, 0x0]
+   ["ffi_type_pointer", 8, 8, 14, 0x0]
+   ["ffi_type_sint16", 2, 2, 8, 0x0]
+   ["ffi_type_sint32", 4, 4, 10, 0x0]
+   ["ffi_type_sint64", 8, 8, 12, 0x0]
+   ["ffi_type_sint8", 1, 1, 6, 0x0]
+   ["ffi_type_uint16", 2, 2, 7, 0x0]
+   ["ffi_type_uint32", 4, 4, 9, 0x0]
+   ["ffi_type_uint64", 8, 8, 11, 0x0]
+   ["ffi_type_uint8", 1, 1, 5, 0x0]
+   ["ffi_type_void", 1, 1, 0, 0x0]])
+(def ^:private ffi-type-ks [:size :alignment :type :elements])
+
+(def ^:private ffi-types-manual
+  (delay
+    (into {}
+          (for [[ffi-type & vals] ffi-type-infos]
+            {ffi-type
+             (reduce (fn [struct [k v]]
+                       (.put ^tech.v3.datatype.struct.Struct struct k v)
+                       struct)
+                     (dt-struct/new-struct :ffi_type {:container-type :native-heap})
+                     (zipmap ffi-type-ks vals))}))))
+
+
 (defn ^:private find-ffi-type [sym]
   []
   (graal-native/if-defined-graal-native
-   (dlsym RTLD_DEFAULT (dt-ffi/string->c sym))
+   (if-let [type (dlsym RTLD_DEFAULT (dt-ffi/string->c sym))]
+     type
+     (get @ffi-types-manual sym))
    (dt-ffi/find-symbol sym)))
-
 
 (def ^:private ffi_type_complex_double (delay (find-ffi-type "ffi_type_complex_double")))
 (def ^:private ffi_type_complex_float (delay (find-ffi-type "ffi_type_complex_float")))
