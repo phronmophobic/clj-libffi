@@ -195,6 +195,12 @@
        {:resource-type :auto
         :uninitialized? true})))
 
+(defn ^:private lower-type [t]
+  (if (#{:pointer :pointer?} t)
+    ;; bug in lower-ptr-type because it doesn't handle :pointer?
+    (ffi-size-t/lower-ptr-type :pointer)
+    t))
+
 (defn call
   "Calls a c function with fname. Function must be
   already linked or loaded using `load-library`.
@@ -249,15 +255,10 @@
 
     (let [ret-ptr (if (= ret-type :void)
                     (long->pointer 0)
-                    (make-ptr-uninitialized (if (= ret-type :pointer)
-                                              :int64
-                                              ret-type)))
-
+                    (make-ptr-uninitialized (lower-type ret-type)))
           value-ptrs (mapv (fn [argtype arg]
-                             (dt-ffi/make-ptr (if (= argtype :pointer)
-                                                :int64
-                                                argtype)
-                                              (if (= argtype :pointer)
+                             (dt-ffi/make-ptr (lower-type argtype)
+                                              (if (#{:pointer :pointer?} argtype)
                                                 (.address ^Pointer
                                                           (dt-ffi/->pointer arg))
                                                 arg)))
@@ -271,7 +272,7 @@
       ;; prevent garbage collection of values and value-ptrs
       (identity [values value-ptrs])
       (when (not= ret-type :void)
-        (if (= ret-type :pointer)
+        (if (#{:pointer :pointer?} ret-type)
           (long->pointer (nth ret-ptr 0))
           (nth ret-ptr 0))))))
 
