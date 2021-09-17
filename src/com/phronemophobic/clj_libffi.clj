@@ -52,11 +52,11 @@
                             ['rvalue :pointer?]
                             ['args :pointer?]]}
 
-      :dlopen {:rettype :pointer
-               :argtypes [['path :pointer]
+      :dlopen {:rettype :pointer?
+               :argtypes [['path :pointer?]
                           ['mode :int32]]}
 
-      :dlsym {:rettype :pointer
+      :dlsym {:rettype :pointer?
               :argtypes [['handle :pointer]
                          ['symbol :pointer]]}
       ,})
