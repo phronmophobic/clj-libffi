@@ -31,7 +31,10 @@
 (def RTLD_SELF (long->pointer -3)) ;;   /* Search this and subsequent objects (Mac OS X 10.5 and later) */
 (def RTLD_MAIN_ONLY (long->pointer -5)) ;;   /* Search main executable only (Mac OS X 10.5 and later) */
 
-(def FFI_DEFAULT_ABI (int 2))
+;; (def FFI_DEFAULT_ABI (int 2))
+(def ^:dynamic *abi*
+  "The ABI to use for ffi calls. The abi value is platform dependent and there's no known way to get the default ABI generically at runtime. aarch64 seems to be 1. x86 seems to be 2."
+  (int 1))
 
 (def
   ffi-lib
@@ -176,7 +179,14 @@
   "Make an object convertible to a pointer that points to  single value of type
   `dtype`."
   (^NativeBuffer [dtype options]
-   (let [dtype (ffi-size-t/lower-ptr-type dtype)
+   (let [dtype (ffi-size-t/numeric-size-t-type dtype)
+         ;; In most situations, ‘libffi’ will handle promotion according to the ABI. However, for historical reasons, there is a special case with return values that must be handled by your code. In particular, for integral (not struct) types that are narrower than the system register size, the return value will be widened by ‘libffi’. ‘libffi’ provides a type, ffi_arg, that can be used as the return type. For example, if the CIF was defined with a return type of char, ‘libffi’ will try to store a full ffi_arg into the return value.
+         dtype (case dtype
+                 :int8 :int64
+                 :int16 :int64
+                 :int32 :int64
+                 dtype)
+
          ^NativeBuffer nbuf (-> (native-buffer/malloc
                                  (casting/numeric-byte-width dtype)
                                  options)
@@ -196,10 +206,7 @@
         :uninitialized? true})))
 
 (defn ^:private lower-type [t]
-  (if (#{:pointer :pointer?} t)
-    ;; bug in lower-ptr-type because it doesn't handle :pointer?
-    (ffi-size-t/lower-ptr-type :pointer)
-    t))
+  (ffi-size-t/numeric-size-t-type t))
 
 (defn call
   "Calls a c function with fname. Function must be
@@ -250,7 +257,8 @@
                                                    (map dt-ffi/->pointer)
                                                    (map #(.address ^Pointer %)))
                                              arg-types))]
-    (ffi_prep_cif cif FFI_DEFAULT_ABI nargs (argtype->ffi-type ret-type)
+
+    (ffi_prep_cif cif *abi* nargs (argtype->ffi-type ret-type)
                   arg-type-ptrs)
 
     (let [ret-ptr (if (= ret-type :void)
