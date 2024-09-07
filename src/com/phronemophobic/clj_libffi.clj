@@ -12,7 +12,7 @@
 
 (set! *warn-on-reflection* true)
 
-(defn ^:private long->pointer [n]
+(defn long->pointer [n]
   (Pointer. n))
 
 (def RTLD_LAZY (int 0x1))
