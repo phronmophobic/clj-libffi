@@ -12,6 +12,15 @@
 
 (set! *warn-on-reflection* true)
 
+(def ^{:private true
+       :dynamic true} *pool* nil)
+
+(defn ->address
+  "Coerce a container to a pointer, but keep a reference to the container in *pool*"
+  [o]
+  (var-set #'*pool* (conj *pool* o))
+  (.address ^Pointer (dt-ffi/->pointer o)))
+
 (defn long->pointer [n]
   (Pointer. n))
 
@@ -94,7 +103,7 @@
   [{:name :size :datatype (ffi-size-t/size-t-type)}
    {:name :alignment :datatype :int16}
    {:name :type :datatype :int16}
-   {:name :elements :datatype (ffi-size-t/ptr-t-type)}])
+   {:name :elements :datatype :pointer}])
 
 ;; see csource/print_ffi_types.c
 (def ^:private ffi-type-infos
@@ -147,6 +156,31 @@
 (def ^:private ffi_type_uint8 (delay (find-ffi-type "ffi_type_uint8")))
 (def ^:private ffi_type_void (delay (find-ffi-type "ffi_type_void")))
 
+(defn ptr-array [ptrs]
+  (dtype/make-container :native-heap
+                        (ffi-size-t/ptr-t-type)
+                        (into
+                         []
+                         (map ->address)
+                         ptrs)))
+
+(declare argtype->ffi-type)
+(defn struct-def->ffi-type [sdef]
+  (let [ftype (dt-struct/new-struct :ffi_type
+                                    {:container-type :native-heap})
+        elements (ptr-array
+                  (concat
+                   (eduction
+                    (map :datatype)
+                    (map argtype->ffi-type)
+                    (:data-layout sdef))
+                   ;; null terminated
+                   [(long->pointer 0)]))]
+    (dt-struct/map->struct!
+     {:type 13
+      :elements (->address elements)}
+     ftype)))
+
 (defn ^:private argtype->ffi-type [type]
   (case type
     :void  @ffi_type_void
@@ -155,9 +189,18 @@
     :int16 @ffi_type_sint16
     :int32 @ffi_type_sint32
     :int64 @ffi_type_sint64
+    :uint8  @ffi_type_uint8
+    :uint16 @ffi_type_uint16
+    :uint32 @ffi_type_uint32
+    :uint64 @ffi_type_uint64
     :float32 @ffi_type_float
-    :float64 @ffi_type_double)
-  )
+    :float64 @ffi_type_double
+    ;; else
+    (if (dt-struct/struct-datatype? type)
+      (let [sdef (dt-struct/get-struct-def type)]
+        (struct-def->ffi-type sdef))
+      (throw (ex-info "Unknown argtype"
+                      {:type type})))))
 
 (defn load-library
   "Loads a shared library.
@@ -235,54 +278,54 @@
 "
   [fname ret-type & types-and-args]
   (assert (even? (count types-and-args)))
-  (let [;; this also initializes the ffi library
-        ;; so that find symbol works :p
-        fptr (dlsym RTLD_DEFAULT (dt-ffi/string->c fname))
-        _ (assert fptr (str "function not found: " fname))
+  (binding [*pool* []]
+    (let [;; this also initializes the ffi library
+          ;; so that find symbol works :p
+          fptr (dlsym RTLD_DEFAULT (dt-ffi/string->c fname))
+          _ (assert fptr (str "function not found: " fname))
 
-        cif (cif-ptr-init)
+          cif (cif-ptr-init)
 
-        arg-types (take-nth 2 types-and-args)
-        args (->>  types-and-args
-                   (drop 1)
-                   (take-nth 2))
+          arg-types (take-nth 2 types-and-args)
+          args (->>  types-and-args
+                     (drop 1)
+                     (take-nth 2))
 
-        nargs (count args)
+          nargs (count args)
 
-        arg-type-ptrs (dtype/make-container :native-heap
-                                            :int64
-                                            (into
-                                             []
-                                             (comp (map argtype->ffi-type)
-                                                   (map dt-ffi/->pointer)
-                                                   (map #(.address ^Pointer %)))
-                                             arg-types))]
+          arg-type-ptrs (dtype/make-container :native-heap
+                                              :int64
+                                              (into
+                                               []
+                                               (comp (map argtype->ffi-type)
+                                                     (map ->address))
+                                               arg-types))]
 
-    (ffi_prep_cif cif *abi* nargs (argtype->ffi-type ret-type)
-                  arg-type-ptrs)
+      (ffi_prep_cif cif *abi* nargs (argtype->ffi-type ret-type)
+                    arg-type-ptrs)
 
-    (let [ret-ptr (if (= ret-type :void)
-                    (long->pointer 0)
-                    (make-ptr-uninitialized (lower-type ret-type)))
-          value-ptrs (mapv (fn [argtype arg]
-                             (dt-ffi/make-ptr (lower-type argtype)
-                                              (if (#{:pointer :pointer?} argtype)
-                                                (.address ^Pointer
-                                                          (dt-ffi/->pointer arg))
-                                                arg)))
-                           arg-types
-                           args)
-          values (dtype/make-container :native-heap
-                                       :int64
-                                       (mapv #(.address ^tech.v3.datatype.native_buffer.NativeBuffer %)
-                                             value-ptrs))]
-      (ffi_call cif fptr ret-ptr values)
-      ;; prevent garbage collection of values and value-ptrs
-      (identity [values value-ptrs])
-      (when (not= ret-type :void)
-        (if (#{:pointer :pointer?} ret-type)
-          (long->pointer (nth ret-ptr 0))
-          (nth ret-ptr 0))))))
+      (let [ret-ptr (if (= ret-type :void)
+                      (long->pointer 0)
+                      (make-ptr-uninitialized (lower-type ret-type)))
+            value-ptrs (mapv (fn [argtype arg]
+                               (if (dt-struct/struct-datatype? argtype)
+                                 arg
+                                 (dt-ffi/make-ptr (lower-type argtype)
+                                                  (if (#{:pointer :pointer?} argtype)
+                                                    (->address arg)
+                                                    arg))))
+                             arg-types
+                             args)
+            values (dtype/make-container :native-heap
+                                         :int64
+                                         (mapv ->address value-ptrs))]
+        (ffi_call cif fptr ret-ptr values)
+        ;; prevent garbage collection of values and value-ptrs
+        (identity [values value-ptrs])
+        (when (not= ret-type :void)
+          (if (#{:pointer :pointer?} ret-type)
+            (long->pointer (nth ret-ptr 0))
+            (nth ret-ptr 0)))))))
 
 
 (comment
@@ -291,7 +334,31 @@
 
   ,)
 
+
+
 (defn -main [& args]
-  (prn "args" args)
-  (println "cos(42) =  " (call (nth args 0 "cos") :float64
-                               :float64 (Double/parseDouble (nth args 1 "42")))))
+  #_(prn "args" args)
+  #_(println "cos(42) =  " (call (nth args 0 "cos") :float64
+                               :float64 (Double/parseDouble (nth args 1 "42"))))
+
+    (dlopen (dt-ffi/string->c "/Users/adrian/workspace/clj-libffi/csource/libcall.dylib")
+            RTLD_LAZY)
+
+  (dt-struct/define-datatype! :time
+    [{:name :tm_sec :datatype :int32}
+     {:name :tm_min :datatype :int32}
+     {:name :tm_hour :datatype :int32}
+     {:name :tm_mday :datatype :int32}
+     {:name :tm_mon :datatype :int32}
+     {:name :tm_year :datatype :int32}
+     {:name :tm_wday :datatype :int32}
+     {:name :tm_yday :datatype :int32}
+     {:name :tm_isdst :datatype :int32}
+     {:name :__tm_gmtoff__ :datatype  :int32}
+     {:name :__tm_zone__ :datatype :pointer}])
+  (binding [*pool* []]
+   (call "print_time" :void
+         :time (dt-struct/map->struct :time {:tm_sec 42
+                                             :tm_isdst 32
+                                             :__tm_zone__ (->address (dt-ffi/string->c "woohoo"))
+                                             } :gc))))
