@@ -16,7 +16,7 @@ void print_ffi_type(const char* name, ffi_type t){
 
 int main(){
 
-
+    printf("size : %lu", sizeof(ffi_closure));
 
     print_ffi_type("ffi_type_complex_double", ffi_type_complex_double);
     print_ffi_type("ffi_type_complex_float", ffi_type_complex_float);

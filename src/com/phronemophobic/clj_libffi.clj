@@ -21,7 +21,7 @@
   (var-set #'*pool* (conj *pool* o))
   (.address ^Pointer (dt-ffi/->pointer o)))
 
-(defn long->pointer [n]
+(defn long->pointer ^Pointer [n]
   (Pointer. n))
 
 (def RTLD_LAZY (int 0x1))
@@ -218,7 +218,7 @@
   (def compress (dlsym RTLD_DEFAULT (dt-ffi/string->c "compress"))))
 
 
-(defn ^:private make-ptr-uninitialized
+(defn make-ptr-uninitialized
   "Make an object convertible to a pointer that points to  single value of type
   `dtype`."
   (^NativeBuffer [dtype options]
@@ -250,6 +250,20 @@
 
 (defn ^:private lower-type [t]
   (ffi-size-t/numeric-size-t-type t))
+
+(defn make-cif [ret-type arg-types]
+  (let [cif (cif-ptr-init)
+        arg-type-ptrs (dtype/make-container :native-heap
+                                              :int64
+                                              (into
+                                               []
+                                               (comp (map argtype->ffi-type)
+                                                     (map ->address))
+                                               arg-types))
+        nargs (count arg-types)]
+    (ffi_prep_cif cif *abi* nargs (argtype->ffi-type ret-type)
+                    arg-type-ptrs)
+    cif))
 
 (defn call
   "Calls a c function with fname. Function must be
@@ -284,25 +298,11 @@
           fptr (dlsym RTLD_DEFAULT (dt-ffi/string->c fname))
           _ (assert fptr (str "function not found: " fname))
 
-          cif (cif-ptr-init)
-
           arg-types (take-nth 2 types-and-args)
           args (->>  types-and-args
                      (drop 1)
                      (take-nth 2))
-
-          nargs (count args)
-
-          arg-type-ptrs (dtype/make-container :native-heap
-                                              :int64
-                                              (into
-                                               []
-                                               (comp (map argtype->ffi-type)
-                                                     (map ->address))
-                                               arg-types))]
-
-      (ffi_prep_cif cif *abi* nargs (argtype->ffi-type ret-type)
-                    arg-type-ptrs)
+          cif (make-cif ret-type arg-types)]
 
       (let [ret-ptr (if (= ret-type :void)
                       (long->pointer 0)
