@@ -16,7 +16,7 @@ typedef struct tm {
 } tm;
 
 
-void print_time(tm t) {
+tm print_time(tm t) {
     printf("    int tm_sec%d\n    int tm_min%d\n    int tm_hour%d\n    int tm_mday%d\n    int tm_mon%d\n    int tm_year%d\n    int tm_wday%d\n    int tm_yday%d\n    int tm_isdst%d\n\n    long int __tm_gmtoff__%d\n    __const char *__tm_zone__%s\n\n",
 	   t.tm_sec,
 	   t.tm_min,
@@ -30,5 +30,9 @@ void print_time(tm t) {
 	   t.__tm_gmtoff__,
 	   t.__tm_zone__
     );
+    t.tm_mon = 1;
+    t.tm_min = 2;
+
+    return t;
 
 }
