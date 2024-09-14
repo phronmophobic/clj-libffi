@@ -316,7 +316,12 @@
 
       (let [ret-ptr (if (= ret-type :void)
                       (long->pointer 0)
-                      (make-ptr-uninitialized (lower-type ret-type)))
+                      (if (dt-struct/struct-datatype? ret-type)
+                        (let [sdef (dt-struct/get-struct-def ret-type)
+                              size (:datatype-size sdef)]
+                          (native-buffer/malloc size
+                                                {:resource-type :auto}))
+                        (make-ptr-uninitialized (lower-type ret-type))))
             value-ptrs (mapv (fn [argtype arg]
                                (if (dt-struct/struct-datatype? argtype)
                                  arg
@@ -333,8 +338,15 @@
         ;; prevent garbage collection of values and value-ptrs
         (identity [values value-ptrs])
         (when (not= ret-type :void)
-          (if (#{:pointer :pointer?} ret-type)
+          (cond
+            (#{:pointer :pointer?} ret-type)
             (long->pointer (nth ret-ptr 0))
+
+            (dt-struct/struct-datatype? ret-type)
+            (dt-struct/inplace-new-struct ret-type
+                                          ret-ptr)
+
+            :else
             (nth ret-ptr 0)))))))
 
 
@@ -367,8 +379,11 @@
      {:name :__tm_gmtoff__ :datatype  :int32}
      {:name :__tm_zone__ :datatype :pointer}])
   (binding [*pool* []]
-   (call "print_time" :void
-         :time (dt-struct/map->struct :time {:tm_sec 42
-                                             :tm_isdst 32
-                                             :__tm_zone__ (->address (dt-ffi/string->c "woohoo"))
-                                             } :gc))))
+    (prn (call "print_time" :time
+               :time (dt-struct/map->struct :time {:tm_sec 42
+                                               :tm_isdst 32
+                                               :__tm_zone__ (->address (dt-ffi/string->c "woohoo"))
+                                               } :gc)))))
+
+
+
