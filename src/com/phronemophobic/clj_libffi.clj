@@ -15,10 +15,18 @@
 (def ^{:private true
        :dynamic true} *pool* nil)
 
+(defonce refs (atom []))
+
+(defn ref! [o]
+  ;; (var-set #'*pool* (conj *pool* o))
+  (swap! refs conj o)
+  o)
+
 (defn ->address
   "Coerce a container to a pointer, but keep a reference to the container in *pool*"
   [o]
-  (var-set #'*pool* (conj *pool* o))
+  ;; (var-set #'*pool* (conj *pool* o))
+  (ref! o)
   (.address ^Pointer (dt-ffi/->pointer o)))
 
 (defn long->pointer ^Pointer [n]
@@ -168,6 +176,7 @@
 (defn struct-def->ffi-type [sdef]
   (let [ftype (dt-struct/new-struct :ffi_type
                                     {:container-type :native-heap})
+        _ (ref! ftype)
         elements (ptr-array
                   (concat
                    (eduction
@@ -253,13 +262,14 @@
 
 (defn make-cif [ret-type arg-types]
   (let [cif (cif-ptr-init)
-        arg-type-ptrs (dtype/make-container :native-heap
-                                              :int64
-                                              (into
-                                               []
-                                               (comp (map argtype->ffi-type)
-                                                     (map ->address))
-                                               arg-types))
+        arg-type-ptrs (ref!
+                       (dtype/make-container :native-heap
+                                             :int64
+                                             (into
+                                              []
+                                              (comp (map argtype->ffi-type)
+                                                    (map ->address))
+                                              arg-types)))
         nargs (count arg-types)]
     (ffi_prep_cif cif *abi* nargs (argtype->ffi-type ret-type)
                     arg-type-ptrs)

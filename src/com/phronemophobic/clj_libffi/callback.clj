@@ -148,8 +148,8 @@
           ;; measured at 56
           ;; hopefully some extra breathing room
           closure-size 80
-          closure (ffi_closure_alloc closure-size
-                                     callback-ptr)
+          closure (ref! (ffi_closure_alloc closure-size
+                                      callback-ptr))
           cif (ref! (ffi/make-cif ret-type arg-types))
 
           ;; ffi_prep_closure_loc(closure, &cif, puts_binding,
@@ -159,7 +159,7 @@
                                  key))
 
           gc @generic-callback*
-          fptr (ffi/long->pointer (nth callback-ptr 0))
+          fptr (ref! (ffi/long->pointer (nth callback-ptr 0)))
 
           _ (assert (zero?
                      (ffi_prep_closure_loc closure
