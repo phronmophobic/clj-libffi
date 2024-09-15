@@ -275,11 +275,12 @@
                     arg-type-ptrs)
     cif))
 
-(defn call
-  "Calls a c function with fname. Function must be
-  already linked or loaded using `load-library`.
 
-  fname: String name of the function
+
+(defn call-ptr
+  "Calls a c function pounter.
+
+  fptr: The function pointer
   ret-type: keyword return type of the function. See types below.
   types-and-args: pairs of <arg-type> <arg-value>. See types below.
 
@@ -298,15 +299,12 @@
 
   Example:
 
-  (call \"cosf\" :float32 :float32 42)
+  (call-ptr ptr :float32 :float32 42)
 "
-  [fname ret-type & types-and-args]
+  [fptr ret-type & types-and-args]
   (assert (even? (count types-and-args)))
   (binding [*pool* []]
-    (let [;; this also initializes the ffi library
-          ;; so that find symbol works :p
-          fptr (dlsym RTLD_DEFAULT (dt-ffi/string->c fname))
-          _ (assert fptr (str "function not found: " fname))
+    (let [_ (assert fptr )
 
           arg-types (take-nth 2 types-and-args)
           args (->>  types-and-args
@@ -349,10 +347,44 @@
             :else
             (nth ret-ptr 0)))))))
 
+(defn call
+    "Calls a c function with fname. Function must be
+  already linked or loaded using `load-library`.
+
+  fname: String name of the function
+  ret-type: keyword return type of the function. See types below.
+  types-and-args: pairs of <arg-type> <arg-value>. See types below.
+
+  Types:
+
+  Same as dtype-next.
+  :void
+  :pointer
+  :pointer?
+  :int8
+  :int16
+  :int32
+  :int64
+  :float32
+  :float64
+
+  Example:
+
+  (call \"cosf\" :float32 :float32 42)
+"
+    [fname ret-type & types-and-args]
+  (let [;; this also initializes the ffi library
+        ;; so that find symbol works :p
+        fptr (dlsym RTLD_DEFAULT (dt-ffi/string->c fname))]
+    (apply call-ptr fptr ret-type types-and-args)))
 
 (comment
   (call "cosf" :float32
         :float32 42)
+  (call-ptr (dlsym RTLD_DEFAULT (dt-ffi/string->c "cosf"))
+            :float32
+            :float32 42
+            )
 
   ,)
 
