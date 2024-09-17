@@ -7,7 +7,8 @@
             [tech.v3.datatype.struct :as dt-struct]
             [tech.v3.datatype.graal-native :as graal-native])
   (:import [tech.v3.datatype.native_buffer NativeBuffer]
-           [tech.v3.datatype.ffi Pointer])
+           [tech.v3.datatype.ffi Pointer]
+           java.lang.ref.Cleaner)
   (:gen-class))
 
 (set! *warn-on-reflection* true)
@@ -31,6 +32,14 @@
 
 (defn long->pointer ^Pointer [n]
   (Pointer. n))
+
+(def cleaner (delay
+               (Cleaner/create)))
+(defn add-cleaner! [o cleanup]
+  (.register ^Cleaner @cleaner
+             o
+             cleanup)
+  o)
 
 (def RTLD_LAZY (int 0x1))
 (def RTLD_NOW (int 0x2))
