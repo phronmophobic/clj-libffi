@@ -6,6 +6,7 @@
             [tech.v3.datatype.casting :as casting]
             [tech.v3.datatype.struct :as dt-struct]
             [tech.v3.datatype.graal-native :as graal-native]
+            [tech.v3.datatype.protocols :as dt-proto]
             [com.phronemophobic.clj-libffi :as ffi])
   (:import [tech.v3.datatype.native_buffer NativeBuffer]
            [java.util.concurrent.atomic AtomicLong]
@@ -44,10 +45,19 @@
                                             (ffi/long->pointer (.getLong  (native-buffer/unsafe) (.address ptr)))
 
                                             ;; else
-                                            ;; I think throwing is a bad idea
-                                            (throw (ex-info "Unsupported arg dtype"
-                                                            {:dtype dtype
-                                                             :callback info}))))))
+                                            (if (dt-struct/struct-datatype? dtype)
+                                              (let [arg-buf (native-buffer/wrap-address (.address ptr)
+                                                                                        (-> dtype
+                                                                                            dt-struct/get-struct-def
+                                                                                            :datatype-size)
+                                                                                        nil)]
+                                                (dt-proto/clone
+                                                 (dt-struct/inplace-new-struct dtype arg-buf)))
+
+                                              ;; I think throwing is a bad idea
+                                              (throw (ex-info "Unsupported arg dtype"
+                                                              {:dtype dtype
+                                                               :callback info})))))))
                          arg-types))]
       (when (not= :void ret-type)
         (case ret-type
@@ -62,13 +72,20 @@
           
           (:pointer :pointer?)
           (.putLong  (native-buffer/unsafe) (.address ret) (unchecked-long
-                                                          (.address (dt-ffi/->pointer result))))
+                                                            (.address (dt-ffi/->pointer result))))
 
           ;; else
-          ;; I think throwing is a bad idea
-          (throw (ex-info "Unsupported arg dtype"
-                          {:dtype ret-type
-                           :callback info})))))
+          (if (dt-struct/struct-datatype? ret-type)
+            (let [sdef (dt-struct/get-struct-def ret-type)
+                  num-bytes (:datatype-size sdef)]
+              (.copyMemory (native-buffer/unsafe)
+                           nil (.address (dt-ffi/->pointer result))
+                           nil (.address ret)
+                           num-bytes))
+            ;; I think throwing is a bad idea
+            (throw (ex-info "Unsupported arg dtype"
+                            {:dtype ret-type
+                             :callback info}))))))
     (catch Exception e
       (prn e))))
 
