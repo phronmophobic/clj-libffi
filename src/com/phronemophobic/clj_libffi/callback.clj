@@ -54,7 +54,6 @@
                                                 (dt-proto/clone
                                                  (dt-struct/inplace-new-struct dtype arg-buf)))
 
-                                              ;; I think throwing is a bad idea
                                               (throw (ex-info "Unsupported arg dtype"
                                                               {:dtype dtype
                                                                :callback info})))))))
@@ -82,11 +81,10 @@
                            nil (.address (dt-ffi/->pointer result))
                            nil (.address ret)
                            num-bytes))
-            ;; I think throwing is a bad idea
             (throw (ex-info "Unsupported arg dtype"
                             {:dtype ret-type
                              :callback info}))))))
-    (catch Exception e
+    (catch Throwable e
       (prn e))))
 
 (defn compile-interface-class [& args]
