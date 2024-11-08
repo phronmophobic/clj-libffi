@@ -101,53 +101,68 @@
 (when *compile-files*
   (compile-interface-class))
 
+
 (def lib
-  (dt-ffi/define-library-interface
-    {
-     :ffi_closure_alloc {:rettype :pointer
-                         :argtypes [['size :int64]
-                                    ['fptr :pointer]]}
+  (merge
+   {
+    :ffi_closure_alloc {:rettype :pointer
+                        :argtypes [['size :int64]
+                                   ['fptr :pointer]]}
 
-     :ffi_prep_closure_loc {:rettype :int32
-                            :argtypes [['closure :pointer]
-                                       ['cif :pointer]
-                                       ['callback :pointer]
-                                       ['userdata :pointer]
-                                       ['wrapped :pointer?]]}
+    :ffi_prep_closure_loc {:rettype :int32
+                           :argtypes [['closure :pointer]
+                                      ['cif :pointer]
+                                      ['callback :pointer]
+                                      ['userdata :pointer]
+                                      ['wrapped :pointer?]]}
 
+
+
+
+
+    ,}
+   (when *compile-files*
      ;; currently, this implementation depends on
      ;; a small native library that looks like the following
      ;; it is currently not included
 
-;; typedef void (*operation_t)(void*,void*,void*,void*);
-;; void clj_generic_callback(void *cif, void *ret, void* args,
-;;                     void *userdata)
-;; {
-;;     long long int key = *((long long int *)userdata);
-;;     graal_isolatethread_t* thread = ...;
-;;     com_phronemophobic_clj_libffi_callback(thread , key, ret, args);
-;; }
-;;
-;;
-;; operation_t clj_get_generic_callback_address(){
-;;     return &clj_generic_callback;
-;; }
-     
-     :clj_generic_callback {:rettype :void
-                            :argtypes [['cif :pointer]
-                                       ['ret :pointer]
-                                       ['args :pointer]
-                                       ['userdata :pointer]]}
+     ;; typedef void (*operation_t)(void*,void*,void*,void*);
+     ;; void clj_generic_callback(void *cif, void *ret, void* args,
+     ;;                     void *userdata)
+     ;; {
+     ;;     long long int key = *((long long int *)userdata);
+     ;;     graal_isolatethread_t* thread = ...;
+     ;;     com_phronemophobic_clj_libffi_callback(thread , key, ret, args);
+     ;; }
+     ;;
+     ;;
+     ;; operation_t clj_get_generic_callback_address(){
+     ;;     return &clj_generic_callback;
+     ;; }
+     {:clj_generic_callback {:rettype :void
+                             :argtypes [['cif :pointer]
+                                        ['ret :pointer]
+                                        ['args :pointer]
+                                        ['userdata :pointer]]}
 
-     :clj_get_generic_callback_address {:rettype :pointer
-                                        :argtypes []}
+      :clj_get_generic_callback_address {:rettype :pointer
+                                         :argtypes []}})))
 
+(dt-ffi/define-library-interface lib)
 
-     ,}))
-
+(declare clj_get_generic_callback_address)
 (def generic-callback*
-  (delay
-    (clj_get_generic_callback_address)))
+  (if (System/getProperty "org.graalvm.nativeimage.imagecode")
+    (delay
+      (clj_get_generic_callback_address))
+    (delay
+      (let [iface (dt-ffi/define-foreign-interface :void [:pointer :pointer :pointer :pointer])
+            iface-inst (dt-ffi/instantiate-foreign-interface
+                        iface
+                        (fn [^Pointer cif ^Pointer ret ^Pointer args ^Pointer userdata]
+                          (let [key (.getLong  (native-buffer/unsafe) (.address userdata))]
+                            (com_phronemophobic_clj_libffi_callback key ret args))))]
+        (dt-ffi/foreign-interface-instance->c iface iface-inst)))))
 
 (defonce refs (atom #{}))
 (defn ref! [o]
