@@ -3,7 +3,7 @@
             [clojure.string :as str]))
 
 (def lib 'com.phronemophobic/clj-libffi)
-(def version "1.5-SNAPSHOT")
+(def version "1.5")
 
 (def class-dir "target/classes")
 (def basis (b/create-basis {:project "deps.edn"}))
